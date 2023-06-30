@@ -59,4 +59,3 @@ class ResultViewController: UIViewController {
         print("Próxima tela")
     }
 }
-
