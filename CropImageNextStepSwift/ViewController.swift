@@ -15,14 +15,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var photoOutput: AVCapturePhotoOutput!
     var tapCount = 0
     
-    // MARK: Setup lifecycle
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .black
-        
-        setupCamera()
-        setupItens()
+        title = "Biometria facial"
+        configNavbar()
+        setCamera()
+        setItens()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -30,29 +28,97 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         tapCount = 0
     }
     
-    // MARK: Setup views in screen
+    lazy var faceFrame: UIImageView = {
+        let image = UIImageView()
+        image.translatesAutoresizingMaskIntoConstraints = false
+        image.image = UIImage(named: "faceFrame")
+        image.contentMode = .scaleToFill
+        return image
+    }()
     
-    lazy private var button: UIButton = {
+    lazy var viewBorderTop: UIView = {
+        let border = ViewBorder().setBorders()
+        return border
+    }()
+    
+    lazy var viewBorderLeft: UIView = {
+        let border = ViewBorder().setBorders()
+        return border
+    }()
+    
+    lazy var viewBorderRight: UIView = {
+        let border = ViewBorder().setBorders()
+        return border
+    }()
+    
+    lazy var viewBorderBottom: UIView = {
+        let border = ViewBorder().setBorders()
+        return border
+    }()
+    
+    lazy var viewBorderFooter: UIView = {
+        let border = ViewBorder().setBorders()
+        border.backgroundColor = .black
+        border.layer.opacity = 1
+        return border
+    }()
+    
+    lazy var button: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.backgroundColor = .white
-        button.layer.cornerRadius = 32
-        button.addTarget(self, action: #selector(capturePhoto), for: .touchUpInside)
+        button.setImage(UIImage(named: "cameraButton"), for: .normal)
+        button.contentMode = .scaleAspectFill
+        button.tintColor = .white
+        button.layer.zPosition = 2
+        button.addTarget(self, action: #selector(capturePhoto), for: .touchDown)
         return button
     }()
     
-    // MARK: Setup itens
-    
-    func setupItens() {
+    func setItens() {
+        view.addSubview(faceFrame)
+        view.addSubview(viewBorderTop)
+        view.addSubview(viewBorderLeft)
+        view.addSubview(viewBorderRight)
+        view.addSubview(viewBorderBottom)
+        view.addSubview(viewBorderFooter)
         view.addSubview(button)
         
-        button.widthAnchor.constraint(equalToConstant: 64).isActive = true
-        button.heightAnchor.constraint(equalToConstant: 64).isActive = true
-        button.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16).isActive = true
+        NSLayoutConstraint.activate([
+            faceFrame.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, constant: -100),
+            faceFrame.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.6),
+            faceFrame.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            faceFrame.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
+            
+            viewBorderTop.widthAnchor.constraint(equalTo: view.widthAnchor),
+            viewBorderTop.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            viewBorderTop.bottomAnchor.constraint(equalTo: faceFrame.topAnchor),
+            
+            viewBorderLeft.topAnchor.constraint(equalTo: viewBorderTop.safeAreaLayoutGuide.bottomAnchor),
+            viewBorderLeft.leftAnchor.constraint(equalTo: view.leftAnchor),
+            viewBorderLeft.rightAnchor.constraint(equalTo: faceFrame.leftAnchor),
+            viewBorderLeft.bottomAnchor.constraint(equalTo: viewBorderBottom.topAnchor),
+            
+            viewBorderRight.topAnchor.constraint(equalTo: viewBorderTop.safeAreaLayoutGuide.bottomAnchor),
+            viewBorderRight.leftAnchor.constraint(equalTo: faceFrame.rightAnchor),
+            viewBorderRight.rightAnchor.constraint(equalTo: view.rightAnchor),
+            viewBorderRight.bottomAnchor.constraint(equalTo: viewBorderBottom.topAnchor),
+            
+            viewBorderBottom.widthAnchor.constraint(equalTo: view.widthAnchor),
+            viewBorderBottom.topAnchor.constraint(equalTo: faceFrame.bottomAnchor),
+            viewBorderBottom.bottomAnchor.constraint(equalTo: viewBorderFooter.topAnchor),
+            
+            viewBorderFooter.widthAnchor.constraint(equalTo: view.widthAnchor),
+            viewBorderFooter.topAnchor.constraint(equalTo: button.safeAreaLayoutGuide.topAnchor, constant: -12),
+            viewBorderFooter.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            button.widthAnchor.constraint(equalToConstant: 65),
+            button.heightAnchor.constraint(equalToConstant: 65),
+            button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            button.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+        ])
     }
     
-    func setupCamera() {
+    func setCamera() {
         captureSession = AVCaptureSession()
         guard let frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) else { return }
         
@@ -62,7 +128,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
             previewLayer.videoGravity = .resizeAspectFill
-            previewLayer.frame = CGRect(x: 0, y: UIScreen.main.bounds.height / 4 - 42.5, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height / 2 + 85)
+            previewLayer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
             view.layer.addSublayer(previewLayer)
             
             captureSession.startRunning()
@@ -74,23 +140,27 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
     }
     
-    @objc func capturePhoto() {
-        tapCount += 1
-        
-        if tapCount == 1 {
-            let photoSettings = AVCapturePhotoSettings()
-            photoSettings.isAutoStillImageStabilizationEnabled = true
-            photoOutput.capturePhoto(with: photoSettings, delegate: self)
-        }
+    @objc private func capturePhoto(_ btn: UIButton) {
+        self.animateButton(btn)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: {
+            self.tapCount += 1
+            if self.tapCount == 1 {
+                let photoSettings = AVCapturePhotoSettings()
+                photoSettings.isAutoStillImageStabilizationEnabled = true
+                self.photoOutput?.capturePhoto(with: photoSettings, delegate: self)
+            }
+        })
     }
     
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        guard let imageData = photo.fileDataRepresentation(), let image = UIImage(data: imageData) else { return }
+        guard let imageData = photo.fileDataRepresentation(),
+              let image = UIImage(data: imageData) else { return }
         
         detectFaces(in: image) { [weak self] hasFace in
             if hasFace {
                 DispatchQueue.main.async {
-                    let resultViewController = ResultViewController(image: image)
+                    let resultViewController = ResultViewController()
+                    resultViewController.image = image
                     self?.navigationController?.pushViewController(resultViewController, animated: true)
                 }
             } else {
@@ -107,6 +177,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     func detectFaces(in image: UIImage, completion: @escaping (Bool) -> Void) {
         guard let ciImage = CIImage(image: image) else { return }
+        let handler = VNImageRequestHandler(ciImage: ciImage, options: [:])
         
         let request = VNDetectFaceRectanglesRequest { request, error in
             if let error = error {
@@ -114,16 +185,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 completion(false)
                 return
             }
-            
             guard let results = request.results as? [VNFaceObservation] else {
                 completion(false)
                 return
             }
-            
             completion(!results.isEmpty)
         }
-        
-        let handler = VNImageRequestHandler(ciImage: ciImage, options: [:])
         
         do {
             try handler.perform([request])
